@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>신호등 마음 게임</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #FBF7F0;
+    --bg-card: #FFFFFF;
+    --bg-soft: #F3EFE7;
+    --ink: #1F2937;
+    --ink-soft: #6B7280;
+    --ink-faint: #9CA3AF;
+    --line: #E5DDD0;
+    --accent: #2C7A6E;
+    --accent-dark: #1F5B52;
+    --accent-soft: #DCEDE9;
+    --green: #5CB377;
+    --green-dark: #4A9462;
+    --green-soft: #E1F0E5;
+    --yellow: #F5C842;
+    --yellow-dark: #D9A91E;
+    --yellow-soft: #FBF1D6;
+    --red: #DC5757;
+    --red-dark: #B83E3E;
+    --red-soft: #FBE2E2;
+    --shadow-sm: 0 1px 2px rgba(31, 41, 55, 0.04), 0 1px 3px rgba(31, 41, 55, 0.06);
+    --shadow-md: 0 4px 8px rgba(31, 41, 55, 0.04), 0 8px 24px rgba(31, 41, 55, 0.08);
+    --shadow-lg: 0 12px 24px rgba(31, 41, 55, 0.06), 0 24px 48px rgba(31, 41, 55, 0.12);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(92, 179, 119, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(245, 200, 66, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 50% 100%, rgba(220, 87, 87, 0.04) 0%, transparent 40%);
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  /* ============ 공통 ============ */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.15s ease;
+    letter-spacing: -0.01em;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(44, 122, 110, 0.25);
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1.5px solid var(--line);
+  }
+  .btn-ghost:hover { background: var(--bg-soft); color: var(--ink); }
+
+  .btn-danger {
+    background: var(--bg-card);
+    color: var(--red-dark);
+    border: 1.5px solid var(--red-soft);
+  }
+  .btn-danger:hover { background: var(--red-soft); }
+
+  /* ============ 랜딩 ============ */
+  .landing {
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .landing h1 {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    margin-top: 20px;
+    color: var(--ink);
+  }
+  .landing h1 .bracket { color: var(--accent); font-weight: 600; }
+
+  .landing p.tagline {
+    font-size: 17px;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    max-width: 480px;
+  }
+
+  .signal-row {
+    display: flex;
+    gap: 24px;
+    margin: 40px 0 48px;
+  }
+  .signal-row .dot {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08), inset 0 -8px 16px rgba(0,0,0,0.08), inset 0 4px 8px rgba(255,255,255,0.3);
+    animation: bounce 2.5s ease-in-out infinite;
+  }
+  .signal-row .dot.green { background: radial-gradient(circle at 35% 30%, #7ED49A, var(--green) 60%, var(--green-dark)); animation-delay: 0s; }
+  .signal-row .dot.yellow { background: radial-gradient(circle at 35% 30%, #FAE07B, var(--yellow) 60%, var(--yellow-dark)); animation-delay: 0.3s; }
+  .signal-row .dot.red { background: radial-gradient(circle at 35% 30%, #EE7B7B, var(--red) 60%, var(--red-dark)); animation-delay: 0.6s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .role-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 640px;
+    margin-top: 8px;
+  }
+  @media (max-width: 600px) {
+    .role-cards { grid-template-columns: 1fr; }
+  }
+
+  .role-card {
+    background: var(--bg-card);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 24px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .role-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+  }
+  .role-card .icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 14px;
+  }
+  .role-card h3 {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .role-card p {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .role-card .arrow {
+    margin-top: 16px;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .join-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .join-form input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .join-form input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: white;
+  }
+  .join-form button {
+    padding: 12px 18px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ============ 강사 화면 ============ */
+  .teacher-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .teacher-header .title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .teacher-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .teacher-header .subtitle {
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+
+  .teacher-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .teacher-grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+  }
+
+  /* 세션 코드 카드 */
+  .session-card {
+    text-align: center;
+  }
+  .session-code-display {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    margin: 8px 0 18px;
+    padding: 14px;
+    background: var(--accent-soft);
+    border-radius: 12px;
+  }
+  .qr-wrapper {
+    display: inline-block;
+    padding: 12px;
+    background: white;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+  }
+  .qr-wrapper img, .qr-wrapper canvas {
+    display: block;
+    border-radius: 4px;
+  }
+  .qr-help {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .url-copy {
+    margin-top: 12px;
+    display: flex;
+    gap: 6px;
+    background: var(--bg-soft);
+    border-radius: 10px;
+    padding: 8px 10px;
+    align-items: center;
+  }
+  .url-copy code {
+    flex: 1;
+    font-size: 12px;
+    color: var(--ink-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'SF Mono', monospace;
+  }
+  .url-copy button {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-family: inherit;
+  }
+  .url-copy button:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* 질문 카드 */
+  .question-input {
+    width: 100%;
+    padding: 16px 18px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    background: var(--bg-soft);
+    resize: vertical;
+    min-height: 60px;
+  }
+  .question-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: white;
+  }
+  .question-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  /* 라이브 결과 */
+  .live-results {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 600px) {
+    .live-results { grid-template-columns: 1fr; }
+  }
+
+  .result-tile {
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+  }
+  .result-tile.green { background: var(--green-soft); }
+  .result-tile.yellow { background: var(--yellow-soft); }
+  .result-tile.red { background: var(--red-soft); }
+
+  .result-tile.pulse { animation: pulse 0.6s ease; }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .result-tile .signal-dot {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08), inset 0 -4px 8px rgba(0,0,0,0.08), inset 0 2px 4px rgba(255,255,255,0.4);
+  }
+  .result-tile.green .signal-dot { background: radial-gradient(circle at 35% 30%, #7ED49A, var(--green) 60%, var(--green-dark)); }
+  .result-tile.yellow .signal-dot { background: radial-gradient(circle at 35% 30%, #FAE07B, var(--yellow) 60%, var(--yellow-dark)); }
+  .result-tile.red .signal-dot { background: radial-gradient(circle at 35% 30%, #EE7B7B, var(--red) 60%, var(--red-dark)); }
+
+  .result-tile .label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .result-tile .count {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    line-height: 1;
+    margin: 6px 0 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .result-tile .percent {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .result-tile .sublabel {
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 6px;
+  }
+
+  .chart-wrapper {
+    position: relative;
+    height: 220px;
+    margin-top: 12px;
+  }
+
+  .total-counter {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .total-counter .num {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .total-counter .lbl {
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #FEE2E2;
+    color: #B91C1C;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .live-indicator::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #DC2626;
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .round-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* ============ 학생 화면 ============ */
+  .student-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 18px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .student-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .student-session-tag {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .student-session-tag b { color: var(--accent); letter-spacing: 0.08em; }
+
+  .question-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-sm);
+  }
+  .question-card .prefix {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+  .question-card .question-text {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .vote-prompt {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .signal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .signal-btn {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 22px;
+    background: var(--bg-card);
+    border: 2px solid var(--line);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+  }
+  .signal-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .signal-btn:active { transform: scale(0.98); }
+
+  .signal-btn .big-dot {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1), inset 0 -6px 12px rgba(0,0,0,0.1), inset 0 3px 6px rgba(255,255,255,0.4);
+  }
+  .signal-btn.green .big-dot { background: radial-gradient(circle at 35% 30%, #7ED49A, var(--green) 60%, var(--green-dark)); }
+  .signal-btn.yellow .big-dot { background: radial-gradient(circle at 35% 30%, #FAE07B, var(--yellow) 60%, var(--yellow-dark)); }
+  .signal-btn.red .big-dot { background: radial-gradient(circle at 35% 30%, #EE7B7B, var(--red) 60%, var(--red-dark)); }
+
+  .signal-btn.green:hover { border-color: var(--green); background: var(--green-soft); }
+  .signal-btn.yellow:hover { border-color: var(--yellow-dark); background: var(--yellow-soft); }
+  .signal-btn.red:hover { border-color: var(--red); background: var(--red-soft); }
+
+  .signal-btn .label-block {
+    flex: 1;
+  }
+  .signal-btn .main-label {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .signal-btn .sub-label {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .voted-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .voted-screen .check-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 38px;
+    box-shadow: var(--shadow-md);
+  }
+  .voted-screen.green-vote .check-circle { background: radial-gradient(circle at 35% 30%, #7ED49A, var(--green) 60%, var(--green-dark)); }
+  .voted-screen.yellow-vote .check-circle { background: radial-gradient(circle at 35% 30%, #FAE07B, var(--yellow) 60%, var(--yellow-dark)); }
+  .voted-screen.red-vote .check-circle { background: radial-gradient(circle at 35% 30%, #EE7B7B, var(--red) 60%, var(--red-dark)); }
+
+  .voted-screen h2 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+  .voted-screen p {
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .voted-screen .waiting-msg {
+    margin-top: 28px;
+    padding: 14px 18px;
+    background: var(--bg-soft);
+    border-radius: 12px;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+  .voted-screen .waiting-msg::before {
+    content: '⏳';
+    margin-right: 6px;
+  }
+
+  /* 푸터 */
+  .footer-note {
+    margin-top: 40px;
+    padding: 18px 22px;
+    background: var(--accent);
+    color: white;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .footer-note::before {
+    content: '✨';
+    margin-right: 6px;
+  }
+
+  /* 토스트 */
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: var(--ink);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* 스플래시 */
+  .hidden { display: none !important; }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--ink-faint);
+    font-size: 14px;
+  }
+  .empty-state-icon {
+    font-size: 40px;
+    margin-bottom: 8px;
+    opacity: 0.4;
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== 랜딩 ========== -->
+<div id="screen-landing" class="container landing">
+  <span class="badge">🚦 실시간 감정 표현 도구</span>
+  <h1><span class="bracket">[</span> 신호등 마음 게임 <span class="bracket">]</span></h1>
+  <p class="tagline">강사가 묻는 말에 신호등 색깔로 답하며<br>모두의 마음을 함께 들여다보는 시간입니다</p>
+
+  <div class="signal-row">
+    <div class="dot green"></div>
+    <div class="dot yellow"></div>
+    <div class="dot red"></div>
+  </div>
+
+  <div class="role-cards">
+    <div class="role-card" onclick="startTeacher()">
+      <div class="icon">👩‍🏫</div>
+      <h3>강사로 시작</h3>
+      <p>세션을 만들고 학생들의 답을 실시간으로 확인하세요</p>
+      <div class="arrow">시작하기 →</div>
+    </div>
+    <div class="role-card">
+      <div class="icon">🙋</div>
+      <h3>학생으로 참여</h3>
+      <p>강사가 알려준 코드를 입력해 참여하세요</p>
+      <div class="join-form">
+        <input id="join-code" type="text" placeholder="코드 6자리" maxlength="6" autocomplete="off">
+        <button onclick="joinAsStudent()">참여</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 강사 화면 ========== -->
+<div id="screen-teacher" class="container hidden">
+  <div class="teacher-header">
+    <div class="title-block">
+      <span class="badge">🚦 강사 모드</span>
+      <h1>신호등 마음 게임</h1>
+      <div class="subtitle">학생들이 실시간으로 응답하면 아래에 바로 표시됩니다</div>
+    </div>
+    <button class="btn btn-ghost" onclick="goHome()">← 처음으로</button>
+  </div>
+
+  <div class="teacher-grid">
+    <!-- 좌측: 세션 코드 & QR -->
+    <div class="card session-card">
+      <h3>📡 학생 접속</h3>
+      <div class="session-code-display" id="t-code">------</div>
+      <div class="qr-wrapper">
+        <div id="t-qr"></div>
+      </div>
+      <div class="qr-help">
+        QR을 휴대폰으로 스캔하거나<br>위 코드를 학생에게 알려주세요
+      </div>
+      <div class="url-copy">
+        <code id="t-url">...</code>
+        <button onclick="copyUrl()">복사</button>
+      </div>
+    </div>
+
+    <!-- 우측: 질문 + 결과 -->
+    <div>
+      <div class="card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="margin: 0;">💬 지금 묻는 말</h3>
+          <span class="round-badge">Round <span id="t-round">1</span></span>
+        </div>
+        <textarea class="question-input" id="t-question" rows="2" placeholder="예: 오늘 일터 분위기는 좋다"></textarea>
+        <div class="question-actions">
+          <button class="btn btn-primary" onclick="updateQuestion()">✓ 질문 적용</button>
+          <button class="btn btn-ghost" onclick="nextRound()">→ 다음 질문 (결과 초기화)</button>
+          <button class="btn btn-danger" onclick="resetVotes()">↺ 현재 결과만 초기화</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div>
+            <h3 style="margin: 0;">📊 실시간 응답</h3>
+            <div class="total-counter" style="margin-top: 6px;">
+              <span class="num" id="t-total">0</span>
+              <span class="lbl">명 응답</span>
+            </div>
+          </div>
+          <span class="live-indicator">LIVE</span>
+        </div>
+
+        <div class="live-results">
+          <div class="result-tile green" id="tile-green">
+            <div class="signal-dot"></div>
+            <div class="label">🟢 초록불</div>
+            <div class="count" id="count-green">0</div>
+            <div class="percent" id="pct-green">0%</div>
+            <div class="sublabel">괜찮아요 / 동의해요</div>
+          </div>
+          <div class="result-tile yellow" id="tile-yellow">
+            <div class="signal-dot"></div>
+            <div class="label">🟡 노란불</div>
+            <div class="count" id="count-yellow">0</div>
+            <div class="percent" id="pct-yellow">0%</div>
+            <div class="sublabel">잘 모르겠어요</div>
+          </div>
+          <div class="result-tile red" id="tile-red">
+            <div class="signal-dot"></div>
+            <div class="label">🔴 빨간불</div>
+            <div class="count" id="count-red">0</div>
+            <div class="percent" id="pct-red">0%</div>
+            <div class="sublabel">불편해요 / 그만!</div>
+          </div>
+        </div>
+
+        <div class="chart-wrapper">
+          <canvas id="result-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">정답이 없어요. 솔직한 마음을 표현하는 시간입니다</div>
+</div>
+
+<!-- ========== 학생 화면 ========== -->
+<div id="screen-student" class="student-screen hidden">
+  <div class="student-header">
+    <span class="badge">🚦 신호등 마음 게임</span>
+    <span class="student-session-tag">세션 <b id="s-code">------</b></span>
+  </div>
+
+  <div id="student-vote-view">
+    <div class="question-card">
+      <div class="prefix">Q.</div>
+      <div class="question-text" id="s-question">강사가 질문을 준비 중입니다...</div>
+    </div>
+
+    <div class="vote-prompt">지금 내 마음에 가장 가까운 색은?</div>
+
+    <div class="signal-buttons">
+      <button class="signal-btn green" onclick="castVote('green')">
+        <div class="big-dot"></div>
+        <div class="label-block">
+          <div class="main-label">초록불</div>
+          <div class="sub-label">괜찮아요 / 동의해요</div>
+        </div>
+      </button>
+      <button class="signal-btn yellow" onclick="castVote('yellow')">
+        <div class="big-dot"></div>
+        <div class="label-block">
+          <div class="main-label">노란불</div>
+          <div class="sub-label">잘 모르겠어요</div>
+        </div>
+      </button>
+      <button class="signal-btn red" onclick="castVote('red')">
+        <div class="big-dot"></div>
+        <div class="label-block">
+          <div class="main-label">빨간불</div>
+          <div class="sub-label">불편해요 / 그만!</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div id="student-voted-view" class="voted-screen hidden">
+    <div class="check-circle">✓</div>
+    <h2 id="voted-title">응답 완료!</h2>
+    <p id="voted-text">솔직한 마음을 나눠주셔서 감사합니다.</p>
+    <div class="waiting-msg">강사가 다음 질문으로 넘어가면<br>자동으로 새 질문이 표시됩니다</div>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div id="toast" class="toast"></div>
+
+<script>
+/* ============================================
+   상태 관리
+============================================ */
+const state = {
+  mode: null,        // 'teacher' | 'student'
+  sessionCode: null, // 6자리 코드
+  studentRound: 0,   // 학생이 마지막으로 투표한 라운드
+  chart: null,
+  pollTimer: null,
+  lastVotesSnapshot: null
+};
+
+const QUESTION_DEFAULT = '오늘 일터 분위기는 좋다';
+
+/* ============================================
+   유틸
+============================================ */
+function genCode() {
+  // 헷갈리기 쉬운 글자 제외 (0, O, 1, I)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function showToast(msg, ms = 2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function show(screenId) {
+  ['screen-landing', 'screen-teacher', 'screen-student'].forEach(id => {
+    document.getElementById(id).classList.toggle('hidden', id !== screenId);
+  });
+}
+
+function getBaseUrl() {
+  // hash 빼고 origin + pathname
+  return window.location.origin + window.location.pathname;
+}
+
+function buildStudentUrl(code) {
+  return getBaseUrl() + '#/s/' + code;
+}
+
+async function storageGet(key) {
+  try {
+    const r = await window.storage.get(key, true);
+    if (!r) return null;
+    return JSON.parse(r.value);
+  } catch (e) {
+    return null;
+  }
+}
+
+async function storageSet(key, value) {
+  try {
+    await window.storage.set(key, JSON.stringify(value), true);
+    return true;
+  } catch (e) {
+    console.error('storage.set failed', e);
+    return false;
+  }
+}
+
+/* ============================================
+   세션 데이터 구조
+============================================
+   key: 'signal_session:{CODE}'
+   value: {
+     question: string,
+     votes: { green, yellow, red },
+     round: number,
+     updatedAt: number
+   }
+============================================ */
+
+async function initSession(code, question) {
+  await storageSet('signal_session:' + code, {
+    question: question || QUESTION_DEFAULT,
+    votes: { green: 0, yellow: 0, red: 0 },
+    round: 1,
+    updatedAt: Date.now()
+  });
+}
+
+async function readSession(code) {
+  return await storageGet('signal_session:' + code);
+}
+
+async function writeSession(code, data) {
+  data.updatedAt = Date.now();
+  await storageSet('signal_session:' + code, data);
+}
+
+/* ============================================
+   강사
+============================================ */
+async function startTeacher() {
+  state.mode = 'teacher';
+  state.sessionCode = genCode();
+
+  // hash 업데이트 (선택적 - 새로고침 시 강사로 복원 안 함, 학생 URL만 hash 사용)
+  await initSession(state.sessionCode, QUESTION_DEFAULT);
+
+  document.getElementById('t-code').textContent = state.sessionCode;
+  document.getElementById('t-question').value = QUESTION_DEFAULT;
+  document.getElementById('t-round').textContent = '1';
+
+  const studentUrl = buildStudentUrl(state.sessionCode);
+  document.getElementById('t-url').textContent = studentUrl;
+
+  // QR 생성
+  const qrEl = document.getElementById('t-qr');
+  qrEl.innerHTML = '';
+  new QRCode(qrEl, {
+    text: studentUrl,
+    width: 180,
+    height: 180,
+    colorDark: '#1F2937',
+    colorLight: '#FFFFFF',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  show('screen-teacher');
+  initChart();
+  startPolling();
+}
+
+async function updateQuestion() {
+  const q = document.getElementById('t-question').value.trim();
+  if (!q) {
+    showToast('질문을 입력해주세요');
+    return;
+  }
+  const data = await readSession(state.sessionCode);
+  if (!data) return;
+  data.question = q;
+  await writeSession(state.sessionCode, data);
+  showToast('질문이 학생들에게 전달되었습니다');
+}
+
+async function nextRound() {
+  const data = await readSession(state.sessionCode);
+  if (!data) return;
+  const q = document.getElementById('t-question').value.trim() || data.question;
+  data.question = q;
+  data.votes = { green: 0, yellow: 0, red: 0 };
+  data.round = (data.round || 1) + 1;
+  await writeSession(state.sessionCode, data);
+  document.getElementById('t-round').textContent = data.round;
+  showToast('새 라운드 시작! 학생들이 다시 응답할 수 있어요');
+}
+
+async function resetVotes() {
+  const data = await readSession(state.sessionCode);
+  if (!data) return;
+  data.votes = { green: 0, yellow: 0, red: 0 };
+  await writeSession(state.sessionCode, data);
+  showToast('현재 응답 결과를 초기화했습니다');
+}
+
+function copyUrl() {
+  const url = document.getElementById('t-url').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showToast('링크 복사 완료'));
+  } else {
+    // 폴백
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('링크 복사 완료'); } catch(e){}
+    document.body.removeChild(ta);
+  }
+}
+
+/* ============================================
+   차트
+============================================ */
+function initChart() {
+  const ctx = document.getElementById('result-chart').getContext('2d');
+  if (state.chart) state.chart.destroy();
+  state.chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['🟢 초록불', '🟡 노란불', '🔴 빨간불'],
+      datasets: [{
+        data: [0, 0, 0],
+        backgroundColor: ['#5CB377', '#F5C842', '#DC5757'],
+        borderRadius: 10,
+        barThickness: 60
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1F2937',
+          padding: 10,
+          titleFont: { family: 'Pretendard Variable', size: 13 },
+          bodyFont: { family: 'Pretendard Variable', size: 14, weight: '600' }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            font: { family: 'Pretendard Variable', size: 12 },
+            color: '#6B7280'
+          },
+          grid: { color: '#E5DDD0' }
+        },
+        x: {
+          ticks: {
+            font: { family: 'Pretendard Variable', size: 13, weight: '600' },
+            color: '#1F2937'
+          },
+          grid: { display: false }
+        }
+      },
+      animation: { duration: 400, easing: 'easeOutQuart' }
+    }
+  });
+}
+
+function updateTeacherUI(data) {
+  if (!data) return;
+
+  // 질문/라운드 (질문 input은 사용자가 편집 중일 수 있어 덮어쓰지 않음 - 라운드만 갱신)
+  document.getElementById('t-round').textContent = data.round || 1;
+
+  const v = data.votes || { green: 0, yellow: 0, red: 0 };
+  const total = v.green + v.yellow + v.red;
+
+  document.getElementById('count-green').textContent = v.green;
+  document.getElementById('count-yellow').textContent = v.yellow;
+  document.getElementById('count-red').textContent = v.red;
+
+  document.getElementById('pct-green').textContent = total ? Math.round(v.green / total * 100) + '%' : '0%';
+  document.getElementById('pct-yellow').textContent = total ? Math.round(v.yellow / total * 100) + '%' : '0%';
+  document.getElementById('pct-red').textContent = total ? Math.round(v.red / total * 100) + '%' : '0%';
+
+  document.getElementById('t-total').textContent = total;
+
+  // 변화 감지 시 펄스
+  if (state.lastVotesSnapshot) {
+    ['green','yellow','red'].forEach(c => {
+      if (v[c] !== state.lastVotesSnapshot[c]) {
+        const tile = document.getElementById('tile-' + c);
+        tile.classList.remove('pulse');
+        void tile.offsetWidth; // reflow
+        tile.classList.add('pulse');
+      }
+    });
+  }
+  state.lastVotesSnapshot = { ...v };
+
+  // 차트
+  if (state.chart) {
+    state.chart.data.datasets[0].data = [v.green, v.yellow, v.red];
+    state.chart.update('none');
+  }
+}
+
+/* ============================================
+   학생
+============================================ */
+async function joinAsStudent() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (code.length !== 6) {
+    showToast('코드 6자리를 입력해주세요');
+    return;
+  }
+  const data = await readSession(code);
+  if (!data) {
+    showToast('해당 세션을 찾을 수 없어요. 코드를 확인해주세요');
+    return;
+  }
+  enterStudentMode(code, data);
+}
+
+function enterStudentMode(code, data) {
+  state.mode = 'student';
+  state.sessionCode = code;
+  state.studentRound = 0;
+
+  document.getElementById('s-code').textContent = code;
+  document.getElementById('s-question').textContent = data.question || '강사가 질문을 준비 중입니다...';
+
+  show('screen-student');
+  showVoteView();
+  startPolling();
+}
+
+function showVoteView() {
+  document.getElementById('student-vote-view').classList.remove('hidden');
+  document.getElementById('student-voted-view').classList.add('hidden');
+}
+
+function showVotedView(color) {
+  const voteView = document.getElementById('student-vote-view');
+  const votedView = document.getElementById('student-voted-view');
+  voteView.classList.add('hidden');
+  votedView.classList.remove('hidden');
+
+  votedView.classList.remove('green-vote', 'yellow-vote', 'red-vote');
+  votedView.classList.add(color + '-vote');
+
+  const titles = {
+    green: '초록불을 선택했어요',
+    yellow: '노란불을 선택했어요',
+    red: '빨간불을 선택했어요'
+  };
+  const texts = {
+    green: '괜찮은 마음, 잘 전달되었어요 💚',
+    yellow: '잘 모르겠는 마음도 소중해요 💛',
+    red: '용기 내어 표현해주셔서 감사합니다 ❤️'
+  };
+  document.getElementById('voted-title').textContent = titles[color];
+  document.getElementById('voted-text').textContent = texts[color];
+}
+
+async function castVote(color) {
+  // 이미 이 라운드에 투표했으면 차단
+  const data = await readSession(state.sessionCode);
+  if (!data) {
+    showToast('세션 연결이 끊겼어요. 새로고침 해주세요');
+    return;
+  }
+  const currentRound = data.round || 1;
+  if (state.studentRound >= currentRound) {
+    showVotedView(color);
+    return;
+  }
+
+  data.votes = data.votes || { green: 0, yellow: 0, red: 0 };
+  data.votes[color] = (data.votes[color] || 0) + 1;
+  await writeSession(state.sessionCode, data);
+
+  state.studentRound = currentRound;
+  showVotedView(color);
+}
+
+function updateStudentUI(data) {
+  if (!data) return;
+  // 질문 텍스트 갱신
+  const qEl = document.getElementById('s-question');
+  if (qEl.textContent !== data.question) {
+    qEl.textContent = data.question;
+  }
+  // 라운드가 바뀌었으면 다시 투표 가능
+  const currentRound = data.round || 1;
+  if (state.studentRound < currentRound) {
+    showVoteView();
+  }
+}
+
+/* ============================================
+   폴링
+============================================ */
+function startPolling() {
+  stopPolling();
+  state.pollTimer = setInterval(async () => {
+    if (!state.sessionCode) return;
+    const data = await readSession(state.sessionCode);
+    if (!data) return;
+    if (state.mode === 'teacher') updateTeacherUI(data);
+    else if (state.mode === 'student') updateStudentUI(data);
+  }, 1200);
+}
+
+function stopPolling() {
+  if (state.pollTimer) {
+    clearInterval(state.pollTimer);
+    state.pollTimer = null;
+  }
+}
+
+/* ============================================
+   라우팅
+============================================ */
+function goHome() {
+  stopPolling();
+  state.mode = null;
+  state.sessionCode = null;
+  window.location.hash = '';
+  show('screen-landing');
+}
+
+async function handleHash() {
+  const h = window.location.hash || '';
+  const m = h.match(/^#\/s\/([A-Z0-9]{6})$/i);
+  if (m) {
+    const code = m[1].toUpperCase();
+    const data = await readSession(code);
+    if (data) {
+      enterStudentMode(code, data);
+    } else {
+      showToast('세션을 찾을 수 없어요');
+      show('screen-landing');
+    }
+    return;
+  }
+  show('screen-landing');
+}
+
+// 코드 입력 자동 대문자
+document.getElementById('join-code').addEventListener('input', (e) => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+});
+document.getElementById('join-code').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') joinAsStudent();
+});
+
+// 페이지 로드 시
+window.addEventListener('hashchange', handleHash);
+handleHash();
+</script>
+
+</body>
+</html>
